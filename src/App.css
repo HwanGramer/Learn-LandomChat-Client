@@ -1,0 +1,6 @@
+.userList{
+    margin-top: 6px;
+}
+.userList:hover{
+    cursor: pointer;
+}

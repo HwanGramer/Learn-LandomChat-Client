@@ -1,29 +1,38 @@
 import React, { useEffect, useState } from 'react'
-import {io} from 'socket.io-client';
+import { useNavigate } from 'react-router-dom';
 
-let socket = io('http://localhost:8080', { transports: ["websocket"] }); //! 소켓서버 접속
-
-function Socketpage() {
+function Socketpage({socket}) {
+    const navi = useNavigate();
     const [userList , setUserList] = useState([]);
     const [myId , setMyId] = useState('');
     const [chatMsg , setChatMsg] = useState('');
     const [chatList , setChatList] = useState([]);
 
     useEffect(()=>{
-        socket.on('GETuserList' , function(userList){ //? 유저목록을 실시간으로 보내줌.
-            setUserList(userList);
-        })
-        socket.on('GETchat' , function(chat){
-            setChatList(chatList => [...chatList , chat]); //? useState배열 이렇게 바꿔야되넹...
-        })
-
         socket.emit('GETmySocketId' , function(socketId){ //? 나의 소켓아이디 가져옴
             setMyId(socketId);
+            socket.on('GETchat' , function(chatInfo){
+                if(chatInfo.id === socketId){
+                    chatInfo.id = '나';
+                }
+                setChatList(chatList => [...chatList ,`${chatInfo.id}님 : ${chatInfo.msg}`]); //? useState배열 이렇게 바꿔야되넹...
+            })
+        })
+
+        socket.on('GETuserList' , function(userList){ //? 유저목록을 실시간으로 보내줌.
+            setUserList(userList);
         })
     },[])
 
     const chatSend = ()=>{
         socket.emit('POSTchat' , ({target : 'DefaultRoom' , msg : chatMsg})); //? 광장전체에 메세지 보냄
+    }
+
+    const individualChat = (id)=>{
+        //? 개인챗으로 넘어가면 기본방에서 나가져야됨.
+        socket.emit('POSTleave' , 'DefaultRoom' , ()=>{
+            navi('/individualChat/'+id);
+        })
     }
 
   return (
@@ -52,8 +61,11 @@ function Socketpage() {
             <h1 style={{'color' : 'red'}}>광장 유저목록</h1> 
             {
                 userList.map((element , index)=>{
+                    if(element === socket.id) return //? 자신 아이디는 출력안됨.
                     return(
-                        <div key={index}>{element}</div>
+                        <div onClick={()=>{individualChat(element)}} className='userList' key={index}>{element}    
+                            <span style={{'color':'red' , 'float' : 'right' ,}}>채팅하기</span> {/* 개인챗 버튼 */}
+                        </div>
                     )
                 })
             }
