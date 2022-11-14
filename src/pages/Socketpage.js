@@ -33,6 +33,7 @@ function Socketpage({socket}) {
         socket.emit('POSTchat' , ({target : 'DefaultRoom' , msg : chatMsg})); //? 광장전체에 메세지 보냄
     }
 
+    //* 개인챗 신청하기
     const individualChat = (id)=>{
         //? 개인챗으로 넘어가면 기본방에서 나가져야됨.
         socket.emit('POSTleave' , 'DefaultRoom' , ()=>{
@@ -41,13 +42,17 @@ function Socketpage({socket}) {
         })
     }
 
-    const callMsg = (callId)=>{
+    //* 개인챗온거 수락하기
+    const callMsg = (callId)=>{ 
         socket.emit('POSTuserCheck' ,callId , (noFindId)=>{ //? 메세지를 받을때 그 유저가 접속중인가 확인하기.
             if(!noFindId){
                 alert('상대가 접속을 해제하였습니다.');
                 setCallerId(callerId => callerId.filter((e)=> e!==callId)) //? 신청건 사람이 접속해재하면 아이콘 하나 사라짐.
-            }else{
-                console.log(callId);
+            }else{      //* 상대의 메세지를 수락했을때 
+                socket.emit('POSTleave' , 'DefaultRoom' , ()=>{ //? 기본방에서 나가게되고 , 채팅방에 접속된다.
+                    socket.emit('POSTindividualChatMsg' , callId , `입장하였습니다`);
+                    navi('/individualChat/'+callId);
+                })
             }
         })
     }
