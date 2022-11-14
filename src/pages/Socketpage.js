@@ -10,6 +10,7 @@ function Socketpage({socket}) {
     const [callerId , setCallerId] = useState([]);
 
     useEffect(()=>{
+        //* 나의 소켓아이디는 가져올 필요없음 이거 바꿔야됨
         socket.emit('GETmySocketId' , function(socketId){ //? 나의 소켓아이디 가져옴
             setMyId(socketId);
             socket.on('GETchat' , function(chatInfo){
@@ -20,10 +21,12 @@ function Socketpage({socket}) {
             })
         })
 
+        //* 유저목록 실시간
         socket.on('GETuserList' , function(userList){ //? 유저목록을 실시간으로 보내줌.
             setUserList(userList);
         })
 
+        //* 채팅신청들어온 사람들의 목록실시간
         socket.on('chatCall' , function(callId){
             setCallerId(callerId => [...callerId,callId]);
         })
